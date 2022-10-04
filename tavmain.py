@@ -1,6 +1,15 @@
 import pandas as pd 
 import streamlit as st
 import altair as alt
+import matplotlib.pyplot as plt
+import plotly
+import plotly.graph_objs as go
+from plotly import tools
+from plotly.offline import init_notebook_mode, plot, iplot
+import plotly.express as px
+from streamlit_folium import folium_static 
+import folium
+from folium.plugins import MarkerCluster
 
 st.title('App - Tópicos Avançados')
 
@@ -18,6 +27,7 @@ rg_mer = reg_mer.copy()
 rg_mer['ano'] = rg_mer['ds'].dt.year
 rg_reg = reg_reg.copy()
 rg_reg['ano'] = rg_reg['ds'].dt.year
+
 
 taberp, tabbi, tabstore = st.tabs(['Sistema Interno', 'Gestão', 'E-Commerce'])
 
@@ -53,6 +63,25 @@ with taberp:
     st.dataframe(clu_pai_cli[
        ['cluster', 'clm_entrega', 'clm_lucro', 'clm_vendas', 'clm_qtde', \
         'clf_vendas', 'cls_lucro', 'clr_dias']])    
+    data = gs_con.merge(
+        coordenadas.drop_duplicates(), 
+        left_on=['City', 'Country'], 
+        right_on=['cidade', 'pais'], 
+        how='left'
+    )
+    data = data.fillna(0)
+    m = folium.Map(location=[0, 0], tiles='openstreetmap', zoom_start=2)
+    for id,row in data.iterrows():
+        folium.Marker(location=[row['lat'],row['lng']], popup=row['Profit']).add_to(m)
+    folium_static(m) 
+
+    m2 = folium.Map(location=[0,0], tiles='cartodbpositron', zoom_start=2)
+    mc = MarkerCluster()
+    for idx, row in data.iterrows():
+        mc.add_child(folium.Marker([row['lat'], row['lng']],popup=row['Country']))
+    m2.add_child(mc)
+    folium_static(m2) 
+
 with tabbi:
     st.header('Dados do Business Intelligence')
     with st.expander('Mercado'):
