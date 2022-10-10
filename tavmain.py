@@ -131,7 +131,7 @@ with tabbi:
         st.plotly_chart(fig)          
         lucros = gs.groupby('Country')['Profit'].sum().reset_index()            
         fig = px.choropleth(lucros,locations='Country',locationmode='country names',color='Profit')
-        fig.update_layout(title='Vendas',template="plotly_white")  
+        fig.update_layout(title='Lucro',template="plotly_white")  
         st.plotly_chart(fig)          
 with tabstore:
     st.header('Dados do Comércio Eletrônico')        
