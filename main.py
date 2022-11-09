@@ -115,7 +115,7 @@ elif opcao == 'BI':
         out_paises = st.multiselect('Paises:', gs['pais'].unique())
         st.dataframe(out_pai[out_pai['referencia'].isin(out_paises)])
 elif opcao == 'eStore':
-    consumidor = st.sidebar.selectbox(
+    consumidor = st.ebar.selectbox(
         'Selecione o consumidor: ',
         gs['con_codigo'].unique() 
     )

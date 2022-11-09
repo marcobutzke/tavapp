@@ -20,9 +20,15 @@ def load_database():
         pd.read_feather('tavbase/clusterizacao_pais.feather'), \
         pd.read_feather('tavbase/regressao_mercado.feather'), \
         pd.read_feather('tavbase/regressao_regiao.feather'), \
+        pd.read_feather('tavbase/knn_pais.feather'), \
+        pd.read_feather('tavbase/knn_produto.feather'), \
+        pd.read_feather('tavbase/knn_subcategoria.feather'), \
+        pd.read_feather('tavbase/outliers_pais.feather'), \
+        pd.read_feather('tavbase/probabilidade_pais.feather'), \
         pd.read_feather('tavbase/localizacao.feather')
 
-gs, cla_con, clu_pai, reg_mer, reg_reg, coordenadas = load_database()
+gs, cla_con, clu_pai, reg_mer, reg_reg, \
+    knn_pais, knn_pro, knn_sub, out_pai, prb_pai, coordenadas = load_database()
 rg_mer = reg_mer.copy()
 rg_mer['ano'] = rg_mer['ds'].dt.year
 rg_reg = reg_reg.copy()
@@ -41,6 +47,11 @@ with taberp:
     cla_con_con = cla_con[cla_con['Customer ID'] == consumidor].reset_index() 
     # st.dataframe(cla_con_con)
     st.dataframe(gs_con[['Customer Name', 'Segment']].drop_duplicates())
+    with st.expander('Paises similares'):
+        st.write(gs_con['Country'][0])
+        st.dataframe(knn_pais[knn_pais['referencia'] == gs_con['Country'][0]] )
+        st.write('Probabilidade:')
+        st.dataframe(prb_pai[prb_pai['Country'] == gs_con['Country'][0]])
     cl1, cl2, cl3, cl4 = st.columns(4)
     cl1.metric('Score', round(cla_con_con['score'][0],4), "1")
     cl2.metric('Classe', round(cla_con_con['classe'][0],4), "1")
@@ -133,6 +144,31 @@ with tabbi:
         fig = px.choropleth(lucros,locations='Country',locationmode='country names',color='Profit')
         fig.update_layout(title='Lucro',template="plotly_white")  
         st.plotly_chart(fig)          
+    with st.expander('RFM/Outliers'):    
+        out_paises = st.multiselect('Paises:', gs_con['Country'].unique())
+        st.dataframe(out_pai[out_pai['referencia'].isin(out_paises)])
 with tabstore:
     st.header('Dados do Comércio Eletrônico')        
-    st.dataframe(coordenadas)
+    consumidor = st.selectbox(
+        'Selecione o consumidor: ',
+        gs['Customer ID'].unique() 
+    )
+    gs_cli = gs[gs['Customer ID'] == consumidor][[
+        'Product ID',
+        'Product Name', 
+        'Sub-Category']
+    ].reset_index()
+    for subcategoria in gs_cli['Sub-Category'].unique():
+        st.info(subcategoria)
+        st.warning('Similares')
+        for idx, rw in knn_sub[knn_sub['referencia'] == subcategoria].iterrows():
+            st.error(rw['vizinho'])
+    for index, row in gs_cli.iterrows():
+        st.info('{0}({1})'.format(row['Product Name'],row['Product ID']))
+        st.write('Similares')
+        for idx, rw in knn_pro[knn_pro['referencia'] == row['Product Name']].iterrows():
+            st.success(rw['vizinho'])
+
+    if st.checkbox('Não clique aqui'):
+        st.balloons()        
+
